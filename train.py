@@ -17,14 +17,14 @@ import utils
 batch_size = 4096
 num_epochs = 1
 max_lr = 5e-5
-model_name = 'ff2_2'
+model_name = 'ff2_4a'
 eval_every_step = 250
 log_every_step = 10
 
-input_columns = ['ILAT', 'GLAT', 'GMLT', 'AL_index', 'SYM_H', 'f107_index']
+input_columns = ["Altitude", "GCLAT", "GCLON", "ILAT", "GLAT", "GMLT", "XXLAT", "XXLON", "Ne1", "AL_index", "SYM_H", "f107_index"]
 output_column = 'Te1'
-train_df = pd.read_csv('data/train_v3.tsv', sep='\t')
-eval_df = pd.read_csv('data/validation_v3.tsv', sep='\t')
+train_df = pd.read_csv('data/train_v4.tsv', sep='\t')
+eval_df = pd.read_csv('data/validation_v4.tsv', sep='\t')
 
 # Keep only input and output columns
 columns_to_keep = input_columns + [output_column]
@@ -32,16 +32,13 @@ train_df = train_df[columns_to_keep]
 eval_df = eval_df[columns_to_keep]
 
 # Normalize all location and atmospheric parameters (mean = 0 and std dev = 1)
-columns_to_normalize = ['ILAT', 'GLAT', 'GMLT', 'AL_index', 'SYM_H', 'f107_index', 'Te1']
-
-# Combine train and validation datasets
-combined_df = pd.concat([train_df, eval_df], axis=0)
+columns_to_normalize = input_columns + [output_column]
 
 # Calculate mean and std for the specified columns across combined dataset
-means, stds = utils.calculate_stats(combined_df, columns_to_normalize)
+means, stds = utils.calculate_stats(train_df, columns_to_normalize)
 
 # Save stats to a JSON file
-with open('data/v3_norm_stats.json', 'w') as f:
+with open(f'data/{model_name}_norm_stats.json', 'w') as f:
     json.dump({'mean': means.to_dict(), 'std': stds.to_dict()}, f)
 
 # Normalize train and eval datasets using the combined stats

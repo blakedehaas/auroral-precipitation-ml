@@ -10,24 +10,25 @@ import utils
 import json
 import matplotlib.pyplot as plt
 
-input_columns = ['ILAT', 'GLAT', 'GMLT', 'AL_index', 'SYM_H', 'f107_index']
+model_name = 'ff2_7'
+input_columns = ["Altitude", "ILAT", "GLAT", "GMLT", "AL_index", "SYM_H", "f107_index"]
 output_column = 'Te1'
 columns_to_keep = input_columns + [output_column]
-columns_to_normalize = ['ILAT', 'GLAT', 'GMLT', 'AL_index', 'SYM_H', 'f107_index', 'Te1']
+columns_to_normalize = input_columns + [output_column]
 
 # Model
 input_size = len(input_columns)
 hidden_size = 2048
 output_size = 1
 model = FF_2Network(input_size, hidden_size, output_size).to("cuda")
-model.load_state_dict(torch.load('ff2_2.pth'))
+model.load_state_dict(torch.load(f'{model_name}.pth'))
 model.eval()  # Set the model to evaluation mode
 
-test_df = pd.read_csv('data/test_v3.tsv', sep='\t')
+test_df = pd.read_csv('data/test_v4.tsv', sep='\t')
 test_df = test_df[columns_to_keep]
 
 # Load means and std from json file
-with open('data/v3_norm_stats.json', 'r') as f:
+with open(f'data/{model_name}_norm_stats.json', 'r') as f:
     norm_stats = json.load(f)
 
 means = norm_stats['mean']
@@ -98,5 +99,5 @@ plt.text(0.95, 0.95, text, transform=plt.gca().transAxes,
 plt.tight_layout()
 
 # Save the plot
-plt.savefig('deviation.png')
+plt.savefig(f'{model_name}_deviation.png')
 plt.close()  # Close the figure to free up memory
