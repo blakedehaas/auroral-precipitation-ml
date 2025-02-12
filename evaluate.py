@@ -122,23 +122,21 @@ with torch.no_grad():
         # top k decoding
         # Apply softmax to logits
         softmax_logits = torch.softmax(logits, dim=1)
-        # Find the top logits indices that sum up to 0.5
-        top_indices = torch.topk(softmax_logits, k=softmax_logits.size(1), dim=1, largest=True, sorted=True)
-        # Calculate the cumulative sum of the top logits
-        cum_sum = torch.cumsum(top_indices.values, dim=1)
-        # Find the indices where the cumulative sum is less than or equal to 0.5
-        indices_05 = torch.sum(cum_sum <= 0.5, dim=1)
-        # Calculate the weighted average of the predictions
+        # Find indices where softmax values are above 0.005
+        mask = softmax_logits > 0.005
+        # Initialize predictions tensor
         y_pred = torch.zeros(logits.shape[0], device=logits.device).unsqueeze(1)
+
         for i in range(logits.shape[0]):
-            top_k = indices_05[i]
-            probs = top_indices.values[i, :top_k]
-            indices = top_indices.indices[i, :top_k]
+            # Get probabilities and indices where mask is True
+            probs = softmax_logits[i][mask[i]]
+            indices = torch.nonzero(mask[i]).squeeze()
+            
             # Normalize probabilities
             probs = probs / probs.sum()
+            
             # Calculate weighted average
             y_pred[i] = (probs * indices).sum() * 100 + 50
-
         # Argmax decoding
         # y_pred = torch.argmax(logits, dim=1) * 100 + 50
 
@@ -187,7 +185,7 @@ plt.text(0.95, 0.95, text, transform=plt.gca().transAxes,
 plt.tight_layout()
 
 # Save the plot
-plt.savefig(f'./checkpoints/{model_name}_deviation_decodingv2.png')
+plt.savefig(f'./checkpoints/{model_name}_deviation_decodingv3topp.png')
 plt.close()  # Close the figure to free up memory
 
 # Plot absolute deviation vs ground truth
@@ -212,7 +210,7 @@ mean_deviation = np.mean(deviations)
 print(f"Mean Deviation: {mean_deviation:.3f}")
 
 plt.tight_layout()
-plt.savefig(f'./checkpoints/{model_name}_deviation_vs_truth_decodingv2.png', dpi=300)
+plt.savefig(f'./checkpoints/{model_name}_deviation_vs_truth_decodingv3topp.png', dpi=300)
 plt.close()
 
 # Plot absolute deviation vs ground truth
@@ -237,6 +235,6 @@ mean_deviation = np.mean(deviations)
 print(f"Mean Deviation: {mean_deviation:.3f}")
 
 plt.tight_layout()
-plt.savefig(f'./checkpoints/{model_name}_deviation_vs_truth_decodingv2.png', dpi=300)
+plt.savefig(f'./checkpoints/{model_name}_deviation_vs_truth_decodingv3topp.png', dpi=300)
 plt.close()
 
